@@ -2,9 +2,52 @@ const express = require('express');
 const cors = require('cors');
 const connection = require('./db');
 const server = express();
+const session = require('express-session');
+const bcrypt = require('bcrypt')
 
 server.use(cors());
 server.use(express.json());
+
+//Login
+server.use(session({
+    secret: 'segredo_academia',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {maxAge: 30 * 60 * 1000} // vai expirar em 30 minutos
+}));
+
+server.post('/login', (req, res) => {
+    const {email, senha} = req.body;
+
+    if(!email || !senha) {
+        return res.status(400).json({erro: 'Preencha email e senha'});
+    }
+
+    connection.query('SELECT * FROM usuario WHERE email = ?', [email], (erro, resultado) => {
+        if(erro){
+            return res.status(500).json({erro: erro.message});
+        }
+        if(resultado.length === 0){
+            return res.status(401).json({erro: 'Usuário não encontrado'});
+        }
+
+        const usuario = resultado[0];
+
+        bcrypt.compare(senha, usuario.senha, (erro, resultadoComparacao) =>{
+            if(erro){
+                return res.status(500).json({erro: erro.message});
+            }
+            if(!resultadoComparacao){
+                return res.status(401).json({erro: 'Senha incorreta'});
+            }
+
+            req.session.usuario = {id: usuario.id_Usuario, nome: usuario.nome};
+            res.json({mensagem: 'Login realizado com sucesso', nome: usuario.nome});
+        });
+    });
+});
+
+
 
 server.get('/alunos', (req,res) => {
     const busca = req.query.busca || '';
