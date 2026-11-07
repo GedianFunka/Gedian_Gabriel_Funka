@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+    <h1>Agendamentos</h1>
+    <a href="principal.html">Voltar</a>
+
+    //Tabela
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Data</th><th>Personal</th>
+                <th>Aluno</th><th>Idade</th><th>Telefone</th><th>E-mail</th>
+                <th>Plano</th><th>Descrição</th><th>Objetivo</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody id="tabela"></tbody>
+    </table>
+
+    <!--Formulário para alterar data-->
+    <h2>Alterar data</h2>
+    <input type="date" id="novaData">
+    <button onclick="salvar()">Salvar</button>
+
+    <script>
+        let idEditando = null;
+
+        <!--Listar agendamentos por data-->
+        async function carregarAgendamentos() {
+            const resposta = await fetch('/agendamentos');
+
+            <!--Sessão expirada: volta para login-->
+            if(resposta.status === 401){
+                window.location.href =  'login.html';
+                return;
+            }
+            
+            const lista = await resposta.json();
+
+            const tabela = document.getElementById('tabela');
+            tabela.innerHTML = '';
+
+            lista.forEach(ag => {
+                const data = ag.data_aula.slice(0,10);
+
+                tabela.innerHTML += `
+                    <tr>
+                        <td>${data}</td>
+                        <td>${ag.personal}</td>
+                        <td>${ag.nome}</td>
+                        <td>${ag.idade}</td>
+                        <td>${ag.telefone}</td>
+                        <td>${ag.email}</td>
+                        <td>${ag.tipo}</td>
+                        <td>${ag.descricao}</td>
+                        <td>${ag.objetivo}</td>
+                        <td><button onclick="editar(${ag.id_Agendamento}, '${data}')">Alterar data</button></td>
+                    </tr>`
+            });
+        }
+
+        <!--Editar-->
+        function editar(id, data) {
+            idEditando = id;
+            document.getElementById('novaData').value = data;
+        }
+        <!--Salvar-->
+        async function salvar() {
+            const data_aula = document.getElementById('novaData').value;
+
+            if(!idEditando || !data_aula){
+                alert('Escolha um agendamento e informe a nova data');
+            }
+
+            const resposta = await fetch ('/agendamentos/' + idEditando, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json' },
+                body: JSON.stringify({data_aula})
+            });
+
+            const dados = await resposta.json();
+
+            alert(dados.mensagem || dados.erro);
+            carregarAgendamentos();
+            return;
+        }
+
+        <!--Serve para listar já quando abrir-->
+        carregarAgendamentos();
+
+    </script>
+
+</body>
+</html>

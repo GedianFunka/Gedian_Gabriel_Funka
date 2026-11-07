@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+    <h1>Login</h1>
+
+    <input type="email" id="email" placeholder="E-mail">
+    <input type="password" id="senha" placeholder="Senha">
+    <button onclick="fazerLogin()">Entrar</button>
+
+    <p id = "mensagem" style= "color: red;"></p>
+
+    <script>
+        async function fazerLogin(){
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+
+            const resposta = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type' : 'application/json' },
+                    body: JSON.stringify({email: email, senha: senha})
+                });
+
+                const dados = await resposta.json();
+
+                    if(resposta.ok){
+                        window.location.href = 'principal.html';
+                    } else {
+                        document.getElementById('mensagem').textContent = dados.erro;
+                    }
+                }
+                
+    </script>
+
+</body>
+</html>

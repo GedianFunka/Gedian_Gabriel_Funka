@@ -115,7 +115,7 @@ CREATE TABLE `usuario` (
   `id_Usuario` int NOT NULL auto_increment,
   `nome` varchar(45) NOT NULL,
   `email` varchar(45) NOT NULL,
-  `senha` varchar(45) NOT NULL,
+  `senha` varchar(300) NOT NULL,
   PRIMARY KEY (`id_Usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -160,4 +160,8 @@ INSERT INTO agendamento (data_aula, personal, Alunos_id_Alunos, Plano_treino_id_
 ('2026-11-03', 'Juliana', 2, 2),
 ('2026-11-05', 'Marcos',  3, 3);
 
-select * from alunos;
+set SQL_SAFE_UPDATES = 0;
+
+update usuario set senha = "$2b$10$B9UooWF.zv3G6C3uxyJabesYv6U78oVQQmlfmqGHf8dd0g3bQNWFi";
+
+select * from usuario;

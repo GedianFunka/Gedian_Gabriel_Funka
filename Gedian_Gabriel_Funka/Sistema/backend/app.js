@@ -7,6 +7,8 @@ const bcrypt = require('bcrypt')
 
 server.use(cors());
 server.use(express.json());
+const path = require('path');
+server.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 //Login
 server.use(session({
@@ -15,6 +17,14 @@ server.use(session({
     saveUninitialized: false,
     cookie: {maxAge: 30 * 60 * 1000} // vai expirar em 30 minutos
 }));
+
+//Verifica se o usuário está logado antes de acessar as rotas protegidas
+function verificarLogin(req, res, next) {
+    if(!req.session.usuario){
+        return res.status(401).json({erro: 'Sessão expirada. Faça login novamente.'});
+    }
+    next();
+}
 
 server.post('/login', (req, res) => {
     const {email, senha} = req.body;
@@ -47,12 +57,24 @@ server.post('/login', (req, res) => {
     });
 });
 
+server.get('/usuario-logado', (req, res) =>{
+    if(!req.session.usuario){
+        return res.status(401).json({erro: 'Usuário não logado'});
+    }
+    res.json({usuario: req.session.usuario});
+});
 
+server.post('/logout', (req,res) => {
+    req.session.destroy(() => {
+        res.json({mensagem: 'Logout realizado com sucesso'});
+    });
+});
 
-server.get('/alunos', (req,res) => {
+// Rotas para alunos
+server.get('/alunos', verificarLogin, (req,res) => {
     const busca = req.query.busca || '';
     const termo = '%' + busca + '%';
-    const sql = 'SELECT * FROM alunos WHERE nome LIKE ? OR email LIKE ? OR telefone LIKE ?';
+    const sql = 'SELECT id_Alunos, nome, idade, email, telefone FROM alunos WHERE nome LIKE ? OR email LIKE ? OR telefone LIKE ?';
 
     connection.query(sql, [termo, termo, termo], (erro, resultado) =>{
         if(erro){
@@ -63,34 +85,67 @@ server.get('/alunos', (req,res) => {
         });
     });
 
-server.post('/alunos', (req,res) => {
+server.post('/alunos', verificarLogin, (req,res) => {
     const {nome, idade, cpf, email, telefone} = req.body;
+
+    //Obrigatoriedade de nome e cpf
+    if(!nome || !cpf){
+        return res.status(400).json({erro: 'Nome e CPF são obrigatórios'});
+    }
+
+    // Criptografando o CPF antes de salvar no banco de dados
+    bcrypt.hash(cpf, 10, (erroHash, cpfCriptografado) => {
+        if(erroHash){
+            return res.status(500).json({erro: erroHash.message});
+        }
 
     const sql = 'INSERT INTO alunos (nome, idade, cpf, email, telefone) VALUES (?,?,?,?,?)';
 
-    connection.query(sql, [nome, idade, cpf, email, telefone], (erro, resultado) => {
+    connection.query(sql, [nome, idade, cpfCriptografado, email, telefone], (erro, resultado) => {
         if (erro) {
             return res.status(500).json({erro: erro.message});
     }
-    res.status(201).json({mensagem: 'Aluno cadastrado com sucesso!'})
+    res.status(201).json({mensagem: 'Aluno cadastrado com sucesso!'});
+
+      });
     });
 });
 
-server.put('/alunos/:id', (req,res) => {
+server.put('/alunos/:id', verificarLogin, (req,res) => {
     const {id} = req.params;
     const {nome, idade, cpf, email, telefone} = req.body;
 
+    //Atualizando e mantendo o CPF
+    if(!cpf){
+        const sql = 'UPDATE alunos SET nome = ?, idade = ?, email = ?, telefone = ? WHERE id_Alunos = ?';
+
+        connection.query(sql, [nome, idade, email, telefone, id], (erro, resultado) => {
+            if(erro){
+                return res.status(500).json({erro: erro.message});
+            }
+            res.json({mensagem: 'Aluno atualizado com sucesso!'});
+        
+        });
+        return;
+    }
+
+    bcrypt.hash(cpf, 10, (erroHash, cpfCriptografado) => {
+        if(erroHash) {
+            return res.status(500).json({erro: erroHash.message});
+        }
+
     const sql = 'UPDATE alunos SET nome = ?, idade = ?, cpf = ?, email = ?, telefone = ? WHERE  id_Alunos = ?';
 
-    connection.query(sql, [nome, idade, cpf, email, telefone, id], (erro, resultado) =>{
+    connection.query(sql, [nome, idade, cpfCriptografado, email, telefone, id], (erro, resultado) =>{
         if (erro){
         return res.status(500).json({erro: erro.message});
      }
     return res.json({mensagem: 'Aluno atualizado com sucesso!'});
+        });
     });
 });
 
-server.delete('/alunos/:id', (req, res) => {
+server.delete('/alunos/:id', verificarLogin, (req, res) => {
     const {id} = req.params;
     
     const sql = 'DELETE FROM alunos WHERE id_Alunos = ?';
@@ -103,7 +158,8 @@ server.delete('/alunos/:id', (req, res) => {
     })
 })
 
-server.get('/agendamentos', (req, res) =>{
+// Rotas para agendamentos
+server.get('/agendamentos', verificarLogin, (req, res) =>{
 
     const sql = 'SELECT ag.id_Agendamento, ag.data_aula, ag.personal, al.nome, al.idade, al.telefone, al.email, p.tipo, p.descricao, p.objetivo FROM agendamento ag JOIN alunos al ON ag.Alunos_id_Alunos = al.id_Alunos JOIN plano_treino p ON ag.Plano_treino_id_Plano_treino = p.id_Plano_treino ORDER BY ag.data_aula';
 
@@ -115,7 +171,7 @@ server.get('/agendamentos', (req, res) =>{
     });
 });
 
-server.put('/agendamentos/:id', (req, res) => {
+server.put('/agendamentos/:id', verificarLogin, (req, res) => {
     const {id} = req.params;
     const {data_aula, personal, Alunos_id_Alunos, Plano_treino_id_Plano_treino} = req.body;
 
@@ -130,7 +186,8 @@ server.put('/agendamentos/:id', (req, res) => {
     });
 });
 
-server.post('/plano_treino', (req,res) => {
+// Rotas para plano de treino
+server.post('/plano_treino', verificarLogin, (req,res) => {
     const {tipo, descricao, objetivo, Alunos_id_Alunos} = req.body;
 
     const sql = 'INSERT INTO plano_treino (tipo, descricao, objetivo, Alunos_id_Alunos) VALUES (?,?,?,?)';

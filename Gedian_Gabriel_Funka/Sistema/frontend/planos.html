@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+    <h1>Planos de treino</h1>
+    <a href="principal.html">Voltar</a>
+
+    <h2>Cadastrar plano</h2>
+
+    <!-- Listade alunos -->
+    <select id="aluno">
+        <option value="">Escolha o aluno</option>
+    </select>
+    <br>
+    <input type="text" id="tipo" placeholder="Tipo (exemplo Hipertrofia)">
+    <input type="text" id="descricao" placeholder="Descrição">
+    <input type="text" id="objetivo" placeholder="Objetivo">
+    <button onclick="salvar()">Cadastrar</button>
+
+    <script>
+        <!-- Carregar os alunos -->
+        async function carregarAlunos(){
+            const resposta = await fetch('/alunos')
+
+            <!--Sessão expira-->
+            if(resposta.status === 401){
+                window.location.href = 'logon.html';
+                return;
+            }
+
+            const alunos = await resposta.json();
+            const select = document.getElementById('aluno');
+
+            alunos.forEach(aluno => {
+                select.innerHTML += `<option value="${aluno.id_Alunos}">${aluno.nome}</option>`;
+            });
+        }
+
+        <!--Salvar-->
+        async function salvar() {
+            const Alunos_id_Alunos = document.getElementById('aluno').value;
+            const tipo = document.getElementById('tipo').value;
+            const descricao = document.getElementById('descricao').value;
+            const objetivo = document.getElementById('objetivo').value;
+
+            if(!Alunos_id_Alunos || !tipo || !objetivo){
+                alert('Escolha o aluno e escolha o tipo e objetivo dele');
+                return;
+            }
+
+            const resposta = await fetch('/plano_treino', {
+                method: 'POST',
+                headers: {'Content-Type' : 'application/json'},
+                body: JSON.stringify({tipo, descricao, objetivo, Alunos_id_Alunos})
+            });
+
+            const dados = await resposta.json();
+
+            alert(dados.mensagem || dados.erro);
+
+            if(resposta.ok){
+                document.getElementById('aluno').value = '';
+                document.getElementById('tipo').value = '';
+                document.getElementById('descricao').value = '';
+                document.getElementById('objetivo').value = '';
+            }
+        }
+
+        <!--Já preenche a lista de alunos ao abrir a página-->
+        carregarAlunos();
+    </script>
+
+</body>
+</html>

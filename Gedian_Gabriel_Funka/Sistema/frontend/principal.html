@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+    <h1>Bem-vindo, <span id="nomeUsuario"></span></h1>
+
+    <nav>
+        <a href="alunos.html">Alunos</a>
+        <a href="planos.html">Planos de treino</a>
+        <a href="agendamentos.html">Agendamentos</a>
+    </nav>
+
+    <button onclick="sair()">Sair</button>
+
+    <script>
+        async function carregarUsuario(){
+            const resposta = await fetch('usuario-logado');
+            
+            if(!resposta.ok){
+                window.location.href='login.html';
+                return;
+            }
+            
+            const dados = await resposta.json();
+            document.getElementById('nomeUsuario').textContent = dados.usuario.nome;
+        }
+
+        async function sair(){
+            await fetch('logout', {method: 'POST'})
+            window.location.href = 'login.html';
+        
+        }
+
+        carregarUsuario();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+    <h1>Alunos</h1>
+    <a href="principal.html">Voltar</a>
+
+    //Busca
+    <br><br>
+    <input type="text" id="busca" placeholder="Nome, E-mail ou telefone">
+    <button onclick="carregarAlunos()">Buscar</button>
+
+    <table>
+        <thead>
+            <tr><th>Nome</th><th>Idade</th><th>E-mail</th><th>Telefone</th><th>Ação</th></tr>
+        </thead>
+        <tbody id="tabela"></tbody>
+    </table>
+
+    <h2>Editar Aluno</h2>
+    <input type="text" id="nome" placeholder="Nome">
+    <input type="number" id="idade" placeholder="Idade">
+    <input type="text" id="email" placeholder="E-mail">
+    <input type="text" id="telefone" placeholder="Telefone">
+    <button onclick="salvar()">Salvar</button>
+
+    <script>
+        let listaAlunos = [];
+        let idEditando = null;
+
+        async function carregarAlunos() {
+            const busca = document.getElementById('busca').value;
+            const resposta = await fetch('/alunos?busca=' + encodeURIComponent(busca));
+
+            if(resposta.status === 401){
+                window.location.href = 'login.html';
+                return;
+            }
+
+            listaAlunos = await resposta.json();
+
+            const tabela = document.getElementById('tabela');
+            tabela.innerHTML = '';
+
+            listaAlunos.forEach(aluno => {
+                tabela.innerHTML += `
+                    <tr>
+                        <td>${aluno.nome}</td>
+                        <td>${aluno.idade}</td>
+                        <td>${aluno.email}</td>
+                        <td>${aluno.telefone}</td>
+                        <td><button onclick="editar(${aluno.id_Alunos})">Editar</button></td>
+                    </tr>`;
+            });
+        }
+
+        <!--Editar-->
+        async function editar(id){
+            const aluno = listaAlunos.find(a => a.id_Alunos === id);
+            idEditando = id;
+            document.getElementById('nome').value = aluno.nome;
+            document.getElementById('idade').value = aluno.idade;
+            documente.getElementById('email').value = aluno.email;
+            document.getElementById('telefone').value = aluno.telefone;
+        }
+
+        <!--Salvar-->
+        async function salvar() {
+            const nome = document.getElementById('nome').value;
+            const idade = document.getElementById('idade').value;
+            const email = document.getElementById('email').value;
+            const telefone = document.getElementById('telefone').value;
+
+            if(!idEditando || !nome){
+                alert('Escolha um aluno e preencha o nome');
+                return;
+            }
+
+            const resposta = await fetch('/alunos/' + idEditando, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({nome, idade: idade || null, email, telefone})
+            });
+
+            const dados = await resposta.json();
+
+            alert(dados.mensagem || dados.erro);
+            carregarAlunos();
+            
+        }
+        
+        <!--Quando abrir a página já mostra os alunos-->
+        carregarAlunos();
+
+    </script>
+
+</body>
+</html>
