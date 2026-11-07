@@ -164,4 +164,4 @@ set SQL_SAFE_UPDATES = 0;
 
 update usuario set senha = "$2b$10$B9UooWF.zv3G6C3uxyJabesYv6U78oVQQmlfmqGHf8dd0g3bQNWFi";
 
-select * from usuario;
+select * from plano_treino;
