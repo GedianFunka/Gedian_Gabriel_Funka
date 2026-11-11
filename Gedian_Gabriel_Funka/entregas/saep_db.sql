@@ -60,7 +60,7 @@ CREATE TABLE `alunos` (
   `id_Alunos` int NOT NULL auto_increment,
   `nome` varchar(45) DEFAULT NULL,
   `Idade` int DEFAULT NULL,
-  `cpf` varchar(45) NOT NULL,
+  `cpf` varchar(255) NOT NULL,
   `telefone` varchar(45) DEFAULT NULL,
   `email` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`id_Alunos`)
@@ -164,4 +164,10 @@ set SQL_SAFE_UPDATES = 0;
 
 update usuario set senha = "$2b$10$B9UooWF.zv3G6C3uxyJabesYv6U78oVQQmlfmqGHf8dd0g3bQNWFi";
 
-select * from plano_treino;
+update alunos set cpf = '$2b$10$twDBE5ELou9.2xCKdREsiem/fphi9EEGVDRtDnUALhxHJZORsGxem' where id_Alunos = 1;
+update alunos set cpf = '$2b$10$d6TmjUd7E4nGskQnYSNfkOHSV6STN3j0.dVwNiqr1ItztC5YpAfzq' where id_Alunos = 2;
+update alunos set cpf = '$2b$10$l3KCBV0mkRJoTaNkqz40pew/ouv2LdfMWNL/b7WyJF5rHWU6b8WYy' where id_Alunos = 3;
+
+select * from alunos;
+
+select * from usuario;

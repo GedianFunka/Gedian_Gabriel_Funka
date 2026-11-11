@@ -57,6 +57,7 @@ server.post('/login', (req, res) => {
     });
 });
 
+//Buscar usuário logado
 server.get('/usuario-logado', (req, res) =>{
     if(!req.session.usuario){
         return res.status(401).json({erro: 'Usuário não logado'});
@@ -85,32 +86,7 @@ server.get('/alunos', verificarLogin, (req,res) => {
         });
     });
 
-server.post('/alunos', verificarLogin, (req,res) => {
-    const {nome, idade, cpf, email, telefone} = req.body;
-
-    //Obrigatoriedade de nome e cpf
-    if(!nome || !cpf){
-        return res.status(400).json({erro: 'Nome e CPF são obrigatórios'});
-    }
-
-    // Criptografando o CPF antes de salvar no banco de dados
-    bcrypt.hash(cpf, 10, (erroHash, cpfCriptografado) => {
-        if(erroHash){
-            return res.status(500).json({erro: erroHash.message});
-        }
-
-    const sql = 'INSERT INTO alunos (nome, idade, cpf, email, telefone) VALUES (?,?,?,?,?)';
-
-    connection.query(sql, [nome, idade, cpfCriptografado, email, telefone], (erro, resultado) => {
-        if (erro) {
-            return res.status(500).json({erro: erro.message});
-    }
-    res.status(201).json({mensagem: 'Aluno cadastrado com sucesso!'});
-
-      });
-    });
-});
-
+//Atualizar alunos
 server.put('/alunos/:id', verificarLogin, (req,res) => {
     const {id} = req.params;
     const {nome, idade, cpf, email, telefone} = req.body;
@@ -145,19 +121,6 @@ server.put('/alunos/:id', verificarLogin, (req,res) => {
     });
 });
 
-server.delete('/alunos/:id', verificarLogin, (req, res) => {
-    const {id} = req.params;
-    
-    const sql = 'DELETE FROM alunos WHERE id_Alunos = ?';
-
-    connection.query(sql, [id], (erro, resultado) => {
-        if(erro){
-            return res.status(500).json({erro: erro.message});
-        }
-        res.json({mensagem: 'Aluno deletado com sucesso!'});
-    })
-})
-
 // Rotas para agendamentos
 server.get('/agendamentos', verificarLogin, (req, res) =>{
 
@@ -171,6 +134,7 @@ server.get('/agendamentos', verificarLogin, (req, res) =>{
     });
 });
 
+//Atualizando agendamentos
 server.put('/agendamentos/:id', verificarLogin, (req, res) => {
     const {id} = req.params;
     const {data_aula, personal, Alunos_id_Alunos, Plano_treino_id_Plano_treino} = req.body;
@@ -200,6 +164,6 @@ server.post('/plano_treino', verificarLogin, (req,res) => {
     });
 });
 
-server.listen(3000, () => {
+server.listen(5000, () => {
     console.log('Servidor rodando na porta 3000');
 });
