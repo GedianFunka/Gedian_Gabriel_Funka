@@ -170,4 +170,6 @@ update alunos set cpf = '$2b$10$l3KCBV0mkRJoTaNkqz40pew/ouv2LdfMWNL/b7WyJF5rHWU6
 
 select * from alunos;
 
+select * from plano_treino;
+
 select * from usuario;
